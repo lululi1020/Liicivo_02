@@ -144,6 +144,38 @@ const showLoadingSpinner = ref(true);
 const uploadedImages = ref<string[] | null>(null);
 const treeSeed = ref(0);
 
+const loadDefaultPhotos = async () => {
+    const base = import.meta.env.BASE_URL;
+
+    const urls = Array.from(
+        { length: 30 },
+        (_, i) => `${base}images/${i + 1}.jpg`
+    );
+
+    const results = await Promise.all(
+        urls.map(async (url) => {
+            try {
+                const response = await fetch(url, {
+                    method: "HEAD"
+                });
+                return response.ok ? url : null;
+            } catch {
+                return null;
+            }
+        })
+    );
+
+    const validUrls = results.filter(
+        (url): url is string => url !== null
+    );
+
+    if (validUrls.length > 0) {
+        uploadedImages.value = validUrls;
+        treeSeed.value += 1;
+    }
+};
+
+
 const toggleUiVisibility = (
     element: HTMLElement | null,
     togglePointerEvents = true
