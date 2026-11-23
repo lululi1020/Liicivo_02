@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, onUnmounted } from "vue";
-import type { HandTrackingData } from "../mediapipe/types";
+import type { HandTrackingData } from "../../mediapipe/types";
 import { TreeExperience } from "../three/core/TreeExperience";
 
 const props = defineProps<{
