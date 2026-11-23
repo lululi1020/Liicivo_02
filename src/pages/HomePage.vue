@@ -116,7 +116,7 @@ import LoadingSpinner from "../components/LoadingSpinner.vue";
 import ChristmasTree from "../components/ChristmasTree.vue";
 import NeteasePlayer from "../components/NeteasePlayer.vue";
 import WebcamHandTracker from "../components/WebcamHandTracker.vue";
-import type { HandTrackingData } from "../types/handTracking";
+import type { HandTrackingData } from "../mediapipe/types";
 
 /**
  * DOM 引用声明 (使用 ref)
@@ -144,20 +144,21 @@ const showLoadingSpinner = ref(true);
 const uploadedImages = ref<string[] | null>(null);
 const treeSeed = ref(0);
 
-const loadDefaultPhotos = async () => {
-    const base = import.meta.env.BASE_URL;
+// 页面首次打开时，自动从 public/images 加载 1.jpg～30.jpg。
+// 手动上传照片优先，避免网络加载覆盖用户刚选的照片。
+let hasManuallyUploaded = false;
 
-    const urls = Array.from(
+const loadDefaultPhotos = async (): Promise<void> => {
+    const base = import.meta.env.BASE_URL;
+    const imageUrls = Array.from(
         { length: 30 },
-        (_, i) => `${base}images/${i + 1}.jpg`
+        (_, index) => `${base}images/${index + 1}.jpg`
     );
 
-    const results = await Promise.all(
-        urls.map(async (url) => {
+    const availableImages = await Promise.all(
+        imageUrls.map(async (url): Promise<string | null> => {
             try {
-                const response = await fetch(url, {
-                    method: "HEAD"
-                });
+                const response = await fetch(url, { method: "HEAD" });
                 return response.ok ? url : null;
             } catch {
                 return null;
@@ -165,16 +166,18 @@ const loadDefaultPhotos = async () => {
         })
     );
 
-    const validUrls = results.filter(
+    if (hasManuallyUploaded) return;
+
+    const validUrls = availableImages.filter(
         (url): url is string => url !== null
     );
-
     if (validUrls.length > 0) {
         uploadedImages.value = validUrls;
         treeSeed.value += 1;
+    } else {
+        console.warn("未找到默认照片，请检查 public/images/1.jpg 等文件");
     }
 };
-
 
 const toggleUiVisibility = (
     element: HTMLElement | null,
@@ -226,6 +229,7 @@ const handleImageUpload = async (e: Event): Promise<void> => {
     );
     if (files.length == 0) return;
 
+    hasManuallyUploaded = true;
     showLoadingSpinner.value = true;
     try {
         const urls = await Promise.all(files.map(readFileAsDataUrl));
@@ -277,6 +281,7 @@ onMounted(() => {
 
     /** 窗口绑定 keydown 事件，用于隐藏/显示 UI */
     window.addEventListener("keydown", handleKeydown);
+    void loadDefaultPhotos();
 });
 
 onBeforeUnmount(() => {
