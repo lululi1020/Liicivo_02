@@ -21,8 +21,8 @@
 
 <script setup lang="ts">
 import { ref, toRef } from "vue";
-import type { HandTrackingData } from "../mediapipe/types";
-import { useHandTracker } from "../mediapipe/hooks/useHandTracker";
+import type { HandTrackingData } from "../../mediapipe/types";
+import { useHandTracker } from "../../mediapipe/hooks/useHandTracker";
 
 interface Props {
     debugMode?: boolean;
